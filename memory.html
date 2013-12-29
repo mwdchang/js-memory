@@ -1,0 +1,244 @@
+<html>
+<head>
+<title>JS-Memory Game</title>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+<style>
+
+.container {
+   -webkit-perspective: 800px;
+   perspective: 800px;
+}
+
+.tile {
+   -webkit-transition: -webkit-transform 1s;
+   transition: transform 1s;
+
+   -webkit-transform-style: preserve-3d;
+   transform-style: preserve-3d;
+
+   border:1 solid #223344;
+
+  -webkit-box-shadow: 1px 1px 3px 3px #777;
+  box-shadow:         1px 1px 3px 3px #777;
+
+}
+
+.flipped {
+   -webkit-transform: rotateY( -180deg );
+   transform: rotateY( -180deg );
+   /*-webkit-transform: translateX(-50%) rotateY( -180deg );
+   transform: translateX(-50%) rotateY( -180deg );*/
+}
+
+.front_face {
+   position:absolute;
+
+   /* Prevent flickers */
+   -webkit-backface-visibility: hidden;
+   backface-visibility: hidden;
+}
+
+.back_face {
+   position:absolute;
+   transform: rotateY(180deg);
+   -webkit-transform: rotateY(180deg); /* Safari and Chrome */
+
+   /* Prevent flickers */
+   -webkit-backface-visibility: hidden;
+   backface-visibility: hidden;
+}
+
+
+</style>
+<script>
+var rows = 6;
+var columns = 12 
+var width = 63*1.5;
+var height = 72*1.5;
+var gutter = 10;
+
+// Interaction
+var selected = [];
+
+
+function test() {
+   d3.selectAll(".tile").classed("flipped", function() {
+      if (d3.select(this).classed("flipped")) return false;
+      return true;
+   });
+}
+
+function search() {
+   var val = d3.select("#user").node().value;
+
+   d3.json("/albums?user=" + val, function(albums) {
+      d3.select("#album")
+        .selectAll("option")
+        .data(albums)
+        .enter()
+        .append("option")
+        .attr("value", function(d, i) {
+           return d.url;
+        })
+        .text(function(d, i) {
+           return d.title;
+        });
+
+      console.log(albums);
+   });
+}
+
+function setField( tiles ) {
+   d3.select("#field")
+     .selectAll("div")
+     .data(tiles)
+     .enter()
+     .append("div")
+     .classed("tile", true)
+     .style("position", "absolute")
+     .style("left", function(d, i) {
+        return gutter+(i % columns) * (width+gutter) + "px";
+     })
+     .style("top", function(d, i) {
+        return gutter + Math.floor(i / columns) * (height+gutter) + "px"; 
+     })
+     .style("width", width + "px")
+     .style("height", height + "px")
+     .on("click", function(d) {
+        console.log("clicked", d);
+        if (d.completed === 1 || d.selected === 1) return;
+
+        if (selected.length < 2) {
+           selected.push(d.id);
+           d.selected = 1;
+           d3.select(this).classed("flipped", true);
+        }
+
+        if (selected.length == 2) {
+           setTimeout(function() {
+              var s = d3.select("#field")
+                .selectAll(".tile")
+                .filter(function(d) {
+                   return selected.indexOf(d.id) > -1;
+                });
+
+              if (selected[0] === selected[1]) {
+                 s.each(function(d) {
+                    d.completed = 1;
+                    d3.select(this).style("opacity", "0.6");
+                 });
+              } else {
+                 s.each(function(d) {
+                    d.selected = 0;
+                    d3.select(this).classed("flipped", null);
+                 });
+              }
+              selected = [];
+           }, 1100);
+        }
+
+     })
+     .each(function(d) {
+        d.completed = 0;
+
+        // Front face
+        d3.select(this)
+          .append("div")
+          .attr("class", "front_face")
+          .style("width", width + "px")
+          .style("height", height + "px")
+          .style("background-color", "#FFCCAA")
+          .style("font-size", "80px")
+          .style("font-family", "Tahoma")
+          .style("font-weight", "bold")
+          .style("text-align", "center")
+          .style("vertical-align", "middle")
+          .text("?");
+         
+        /*
+        d3.select(this)
+          .append("img")
+          .attr("class", "front_face")
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .attr("src", "asdfasdfasdf");
+        */
+
+        // Back face
+        d3.select(this)
+          .append("img")
+          .attr("class", "back_face")
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .attr("src", d.link);
+     });
+}
+
+
+function selectAlbum() {
+   var user  = d3.select("#user").node().value;
+   var album = d3.select("#album").node().options[ d3.select("#album").node().selectedIndex ].value;
+   console.log("album val", album);
+
+   if (album === '-') return;
+
+   d3.select("#field").selectAll(".tile").classed("flipped", null);
+   d3.select("#field").selectAll(".tile").remove();
+
+   d3.json("/photos?user=" + user + "&album=" + album, function(photos) {
+      var len = photos.length;
+      var tiles = [];
+
+      if (photos.length > (rows*columns)*0.5) {
+         len = Math.floor(rows*column*0.5);
+      }
+
+      for (var i=0; i < 2; i++) {
+         for (var idx=0; idx < len; idx++) {
+            //tiles.push(photos[idx]);
+            tiles.push({
+               id: photos[idx].id,
+               link: photos[idx].link
+            });
+         }
+      }
+      tiles = _.shuffle(tiles);
+      console.log("num tiles", tiles.length);
+      setField(tiles);
+   });
+}
+
+</script>
+</head>
+<body>
+<!-- Options -->
+<section style="display:block; height:14%; background-color:#CCAACC; margin:2px; padding:2px">
+<input type="text" id="user" value="" placeholder="Enter User Id"/><button onClick="search()">Search</button>
+<!--<button onClick="test()">Button</button>-->
+
+<br>
+<select id="album" onChange="selectAlbum()"> 
+   <option value="-">Select album</option>
+</select>
+</section>
+
+<!-- Playing area -->
+<section class="container" style="display:block; height:84%; background-color:#AACCAA; margin:2px">
+<div id="field">
+</div>
+
+<!--
+<div class="tile" style="width:600px">
+   <img class="back_face" src="https://www.google.ca/images/srpr/logo11w.png"></img>
+   <img class="front_face" src="http://vsual.co/wp-content/uploads/2011/09/HumanRightsLogo_CO.jpg"></img>
+</div>
+-->
+</section>
+</body>
+<script>
+
+
+
+</script>
+</html>
