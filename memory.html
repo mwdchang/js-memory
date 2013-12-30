@@ -19,8 +19,8 @@
 
    border:1 solid #223344;
 
-  -webkit-box-shadow: 1px 1px 3px 3px #777;
-  box-shadow:         1px 1px 3px 3px #777;
+  -webkit-box-shadow: 1px 1px 2px 2px #777;
+  box-shadow:         1px 1px 2px 2px #777;
 
 }
 
@@ -60,15 +60,10 @@ var gutter = 10;
 
 // Interaction
 var selected = [];
+var numTries = 0;
 
 
-function test() {
-   d3.selectAll(".tile").classed("flipped", function() {
-      if (d3.select(this).classed("flipped")) return false;
-      return true;
-   });
-}
-
+// Search album by user name
 function search() {
    var val = d3.select("#user").node().value;
 
@@ -84,12 +79,16 @@ function search() {
         .text(function(d, i) {
            return d.title;
         });
-
-      console.log(albums);
    });
 }
 
+
+// Setup the tiles
 function setField( tiles ) {
+   tiles.forEach(function(tile) {
+      tile.selected = 0;
+   });
+
    d3.select("#field")
      .selectAll("div")
      .data(tiles)
@@ -106,7 +105,6 @@ function setField( tiles ) {
      .style("width", width + "px")
      .style("height", height + "px")
      .on("click", function(d) {
-        console.log("clicked", d);
         if (d.completed === 1 || d.selected === 1) return;
 
         if (selected.length < 2) {
@@ -116,6 +114,9 @@ function setField( tiles ) {
         }
 
         if (selected.length == 2) {
+           numTries ++;
+           d3.select("#score").text(numTries);
+
            setTimeout(function() {
               var s = d3.select("#field")
                 .selectAll(".tile")
@@ -146,6 +147,10 @@ function setField( tiles ) {
         d3.select(this)
           .append("div")
           .attr("class", "front_face")
+          .style("cursor", function(d) {
+             if (d.selected == 0) { return "pointer"; }
+             else { return "default"; }
+          })
           .style("width", width + "px")
           .style("height", height + "px")
           .style("background-color", "#FFCCAA")
@@ -154,17 +159,10 @@ function setField( tiles ) {
           .style("font-weight", "bold")
           .style("text-align", "center")
           .style("vertical-align", "middle")
+          .style("color", "#757575")
+          .style("text-shadow", "2px 2px #444444")
           .text("?");
          
-        /*
-        d3.select(this)
-          .append("img")
-          .attr("class", "front_face")
-          .attr("width", "100%")
-          .attr("height", "100%")
-          .attr("src", "asdfasdfasdf");
-        */
-
         // Back face
         d3.select(this)
           .append("img")
@@ -176,10 +174,11 @@ function setField( tiles ) {
 }
 
 
+
+// Fetch and shuffle photos
 function selectAlbum() {
    var user  = d3.select("#user").node().value;
    var album = d3.select("#album").node().options[ d3.select("#album").node().selectedIndex ].value;
-   console.log("album val", album);
 
    if (album === '-') return;
 
@@ -189,6 +188,8 @@ function selectAlbum() {
    d3.json("/photos?user=" + user + "&album=" + album, function(photos) {
       var len = photos.length;
       var tiles = [];
+      numTries = 0;
+      d3.select("#score").text(numTries);
 
       if (photos.length > (rows*columns)*0.5) {
          len = Math.floor(rows*column*0.5);
@@ -204,7 +205,6 @@ function selectAlbum() {
          }
       }
       tiles = _.shuffle(tiles);
-      console.log("num tiles", tiles.length);
       setField(tiles);
    });
 }
@@ -213,27 +213,29 @@ function selectAlbum() {
 </head>
 <body>
 <!-- Options -->
-<section style="display:block; height:14%; background-color:#CCAACC; margin:2px; padding:2px">
+<section style="display:block; height:10%; background-color:#DDDDDD; margin:2px; padding:5px">
+<div style="font-family:Tahoma; font-size:14px">
+   <strong>JS Memory Game</strong>
+</div>
+<br>
+<div style="float:left">
 <input type="text" id="user" value="" placeholder="Enter User Id"/><button onClick="search()">Search</button>
-<!--<button onClick="test()">Button</button>-->
-
 <br>
 <select id="album" onChange="selectAlbum()"> 
    <option value="-">Select album</option>
 </select>
+</div>
+<div style="float:left; margin-left:100px; font-family:Tahoma; font-size:28px">
+   <span>Attempts: </span><span id="score"></span>
+</div>
+<div style="clear:both"></div>
 </section>
 
 <!-- Playing area -->
-<section class="container" style="display:block; height:84%; background-color:#AACCAA; margin:2px">
+<section class="container" style="display:block; height:84%; margin:2px">
 <div id="field">
 </div>
 
-<!--
-<div class="tile" style="width:600px">
-   <img class="back_face" src="https://www.google.ca/images/srpr/logo11w.png"></img>
-   <img class="front_face" src="http://vsual.co/wp-content/uploads/2011/09/HumanRightsLogo_CO.jpg"></img>
-</div>
--->
 </section>
 </body>
 <script>
