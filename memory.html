@@ -5,6 +5,27 @@
 <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
 <style>
 
+
+body {
+   margin: 4px;
+   border: 2px solid #EEEEEE;
+}
+
+.menubar {
+   display:block;
+   height: 10%;
+   background-color:#DDDDDD;
+   margin: 2px;
+   padding:5px;
+}
+
+.field {
+   display:block;
+   height: 85%;
+   margin: 2px;
+   background-color:#F0F0F0;
+}
+
 .container {
    -webkit-perspective: 800px;
    perspective: 800px;
@@ -19,8 +40,8 @@
 
    border:1 solid #223344;
 
-  -webkit-box-shadow: 1px 1px 2px 2px #777;
-  box-shadow:         1px 1px 2px 2px #777;
+  -webkit-box-shadow: 1px 1px 2px 1px #777;
+  box-shadow:         1px 1px 2px 1px #777;
 
 }
 
@@ -54,13 +75,17 @@
 <script>
 var rows = 6;
 var columns = 12 
-var width = 63*1.5;
-var height = 72*1.5;
-var gutter = 10;
+//var width = 63*1.5;
+//var height = 72*1.5;
+var width = 126;
+var height = 144;
+var gutter = 9;
 
 // Interaction
 var selected = [];
 var numTries = 0;
+var tileUnselect = "#FFCCAA";
+var tileSelect = "#5588BB";
 
 
 // Search album by user name
@@ -132,7 +157,9 @@ function setField( tiles ) {
               } else {
                  s.each(function(d) {
                     d.selected = 0;
-                    d3.select(this).classed("flipped", null);
+                    d3.select(this).transition().duration(Math.random()*300).each("end", function() {
+                       d3.select(this).classed("flipped", null);
+                    });
                  });
               }
               selected = [];
@@ -153,14 +180,22 @@ function setField( tiles ) {
           })
           .style("width", width + "px")
           .style("height", height + "px")
-          .style("background-color", "#FFCCAA")
-          .style("font-size", "80px")
+          .style("background-color", function(d) {
+              return tileUnselect;
+          })
+          .style("font-size", "110px")
           .style("font-family", "Tahoma")
           .style("font-weight", "bold")
           .style("text-align", "center")
           .style("vertical-align", "middle")
-          .style("color", "#757575")
+          .style("color", "#858585")
           .style("text-shadow", "2px 2px #444444")
+          .on("mouseover", function() {
+             d3.select(this).style("background-color", tileSelect);
+          })
+          .on("mouseout", function() {
+             d3.select(this).style("background-color", tileUnselect);
+          })
           .text("?");
          
         // Back face
@@ -184,15 +219,18 @@ function selectAlbum() {
 
    d3.select("#field").selectAll(".tile").classed("flipped", null);
    d3.select("#field").selectAll(".tile").remove();
+   d3.select("#field").text("Loading...");
 
    d3.json("/photos?user=" + user + "&album=" + album, function(photos) {
       var len = photos.length;
       var tiles = [];
       numTries = 0;
+
+      d3.select("#field").text(null);
       d3.select("#score").text(numTries);
 
       if (photos.length > (rows*columns)*0.5) {
-         len = Math.floor(rows*column*0.5);
+         len = Math.floor(rows*columns*0.5);
       }
 
       for (var i=0; i < 2; i++) {
@@ -213,7 +251,7 @@ function selectAlbum() {
 </head>
 <body>
 <!-- Options -->
-<section style="display:block; height:10%; background-color:#DDDDDD; margin:2px; padding:5px">
+<section class="menubar">
 <div style="font-family:Tahoma; font-size:14px">
    <strong>JS Memory Game</strong>
 </div>
@@ -232,15 +270,10 @@ function selectAlbum() {
 </section>
 
 <!-- Playing area -->
-<section class="container" style="display:block; height:84%; margin:2px">
+<section class="container field"> 
 <div id="field">
 </div>
-
 </section>
 </body>
-<script>
 
-
-
-</script>
 </html>

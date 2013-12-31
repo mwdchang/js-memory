@@ -54,8 +54,8 @@ app.get('/photos', function(req, res) {
          obj.feed.entry.forEach(function(entry) {
             var e = {};
             e.id = entry.gphoto$id.$t;
-            e.link = entry.media$group.media$thumbnail[0].url; // 63x72
-            //e.link = entry.media$group.media$thumbnail[1].url; // 126x144
+            //e.link = entry.media$group.media$thumbnail[0].url; // 63x72
+            e.link = entry.media$group.media$thumbnail[1].url; // 126x144
             //e.link = entry.media$group.media$thumbnail[2].url; // 251x288
             result.push(e);
          });
