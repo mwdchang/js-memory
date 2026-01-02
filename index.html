@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="styles.css"></link>
+<script src="http://d3js.org/d3.v7.min.js" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js" integrity="sha512-WFN04846sdKMIP5LKNphMaWzU7YpMyCU245etK3g/2ARYbPK9Ub18eG+ljU96qKRCWh+quCY7yefSmlkQw1ANQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://unpkg.com/fireworks-js@2.x/dist/index.umd.js"></script>
+<title>JS-Memory Game</title>
+</head>
+<body>
+  <h2>JS Memory</h2>
+  <p>
+    A simple Javascript Memory game. Click and match image pairs.
+  </p>
+  <div id="loading"> 
+      <h2>Loading images, this will take a few seconds ... <span id="counter"></span></h2>
+  </div>
+  <div id="done" style="display: none"> 
+      <h2>Refresh the page to start a new game</h2>
+  </div>
+
+
+  <main></main>
+  <div id="fireworks" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none"></div>
+</body>
+<script type="module">
+/* Load image utility library */
+import * as ImageUtil from "https://cdn.jsdelivr.net/gh/mwdchang/image-util@latest/dist/index.js"
+
+
+const SIZE = 150;
+const tileUnselect = "#FFCCAA";
+
+
+let selectedBuffer = [];
+let numTries = 0;
+
+const winningFireworks = () => {
+  const container = document.querySelector('#fireworks');
+  const fireworks = new Fireworks.default(container);
+  fireworks.start();
+  setTimeout(() => {
+    fireworks.stop();
+    d3.select('#done').style('display', null);
+  }, 10000);
+}
+
+const createGradient = () => {
+  const hue = Math.random() * 240;
+  const light1 = 96 + Math.random() * 2; 
+  const light2 = 32 + Math.random() * 2;
+
+  return `
+    radial-gradient(
+      circle at ${30 + Math.random() * 40}% ${30 + Math.random() * 40}%,
+      hsl(${hue}, 25%, ${light1}%),
+      hsl(${hue}, 25%, ${light2}%)
+    )
+  `;
+}
+
+/* Main logic */
+const setupTiles = async (tiles) => {
+  const tileDivs = d3.select("main")
+    .selectAll("div")
+    .data(tiles)
+    .enter()
+    .append("div")
+    .classed('tile', true);
+
+
+  tileDivs.each(function(d) {
+    // Front face
+    d3.select(this)
+      .append("div")
+      .attr("class", "front_face")
+      .style("cursor", function(d) {
+         if (d.selected == 0) { return "pointer"; }
+         else { return "default"; }
+      })
+      .style('width', `${SIZE}px`)
+      .style('height', `${SIZE}px`)
+      .style("background", createGradient())
+      .append('div')
+      .style('transform', `rotate(${-40 + Math.random() * 80}deg)`)
+      .text('?');
+        
+
+    // Back face
+    const canvas = d3.select(this)
+     .append("canvas")
+     .attr("width", SIZE)
+     .attr("height", SIZE)
+     .attr("class", "back_face");
+
+    const ctx = canvas.node().getContext("2d");
+    ctx.putImageData(d.imageData, 0, 0);
+  });
+
+  tileDivs.on('click', function(event, d) {
+    if (d.selected === 1) return;
+
+    d.selected = 1;
+    selectedBuffer.push(d.id);
+    d3.select(this).classed("flipped", true);
+
+    if (selectedBuffer.length === 2) {
+      numTries ++;
+      setTimeout(() => {
+        const selectedTiles = d3
+          .select("main")
+          .selectAll(".tile")
+          .filter(function(d) {
+             return selectedBuffer.indexOf(d.id) > -1;
+          });
+
+        if (selectedBuffer[0] === selectedBuffer[1]) {
+          selectedTiles.each(function(d) {
+            d.completed = 1;
+            d3.select(this).select('.back_face').style('opacity', '0.5');
+          });
+
+          if (_.every(tiles, d => d.completed === 1)) {
+            winningFireworks();
+          }
+        } else {
+          selectedTiles.each(function(d) {
+            d.selected = 0;
+            d3.select(this).classed("flipped", null);
+          });
+        }
+        selectedBuffer = [];
+      }, 800);
+    }
+  });
+
+  tileDivs.style('--tilt', () => `${-5 + Math.random() * 10}deg`);
+}
+
+/* Initialize image data */
+let tiles = [];
+const N = 2 + Math.floor(Math.random() * 15);
+for (let i = 0; i < N; i++) {
+  const img = await ImageUtil.loadImage(`https://picsum.photos/${SIZE}?random=${i}`, { width: 150, height: 150 });
+  tiles.push({
+    id: i,
+    imageData: img,
+    selected: 0,
+    completed: 0
+  });
+  tiles.push({
+    id: i,
+    imageData: img,
+    selected: 0,
+    completed: 0
+  });
+  d3.select('#counter').text(N - i);
+}
+tiles = _.shuffle(tiles);
+
+d3.select('#loading').remove();
+setupTiles(tiles);
+
+
+</script>
+</html>

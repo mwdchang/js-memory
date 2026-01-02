@@ -1,22 +1,20 @@
-js-memory
-=========
+## js-memory
+A simple Javascript based Memory-game.
 
-Javascript memory game using picasa photo streams. 
+This uses D3.js and Lodash, along with:
+- https://github.com/mwdchang/image-util/ (image loading/util)
+- https://github.com/crashmax-dev/fireworks-js/ (fireworks animation)
+- https://picsum.photos/ (source images)
 
-This game allows you to play a game of memory with photos from your Picasa photo album. It uses `node` to serve up Picasa API requests. The front-end uses `d3` for data-binding and layout, with `underscore` utility belt.
 
+![In-game screenshot](jsmem.png)
 
-
-
-Installation and requirement
-----------------------------
-* install nodejs
-* npm install node-static express request
-* node server.js
-* open brower to http://localhost:5555/memory.html
 
  
-Screen Shot
------------
+### Old version
+This was originally written to work with Picasa and had a server component, by scanning a person's public albums and use the underlying content as image sources. However this no longer worked since Google discontinued Picasa around 2017 or so. 
+
+For kicks and giggles see `archive` for the old version.
+
 ![Image](https://lh4.googleusercontent.com/-dBnjzKlSf1w/UsIgB2Ja1VI/AAAAAAAAByA/BjtiLBsjQN0/s1280/screen_cap1.jpg)
 
