@@ -11,16 +11,22 @@
 <title>JS-Memory Game</title>
 </head>
 <body>
-  <h2>JS Memory</h2>
-  <p>
-    A simple Javascript Memory game. Click and match image pairs.
-  </p>
-  <div id="loading"> 
-      <h2>Loading images, this will take a few seconds ... <span id="counter"></span></h2>
-  </div>
-  <div id="done" style="display: none"> 
-      <h2>Refresh the page to start a new game</h2>
-  </div>
+  <section>
+    <div style="font-size: 2rem">
+      <a style="color: #f80" href="http://github.com/mwdchang/js-memory" target="_blank">JS Memory</a>
+    </div>
+    <p>
+      A simple Javascript Memory game. Click cards below to find and match image pairs.
+    </p>
+
+    <!-- notification messages -->
+    <div id="loading"> 
+        <h2>Loading images, this will take a few seconds ... <span id="counter"></span></h2>
+    </div>
+    <div id="done" style="display: none"> 
+        <h2>Refresh the page to start a new game</h2>
+    </div>
+  </section>
 
 
   <main></main>
@@ -30,11 +36,7 @@
 /* Load image utility library */
 import * as ImageUtil from "https://cdn.jsdelivr.net/gh/mwdchang/image-util@latest/dist/index.js"
 
-
 const SIZE = 150;
-const tileUnselect = "#FFCCAA";
-
-
 let selectedBuffer = [];
 let numTries = 0;
 
@@ -55,7 +57,7 @@ const createGradient = () => {
 
   return `
     radial-gradient(
-      circle at ${30 + Math.random() * 40}% ${30 + Math.random() * 40}%,
+      circle at ${20 + Math.random() * 50}% ${20 + Math.random() * 50}%,
       hsl(${hue}, 25%, ${light1}%),
       hsl(${hue}, 25%, ${light2}%)
     )
@@ -70,7 +72,6 @@ const setupTiles = async (tiles) => {
     .enter()
     .append("div")
     .classed('tile', true);
-
 
   tileDivs.each(function(d) {
     // Front face
@@ -133,7 +134,7 @@ const setupTiles = async (tiles) => {
           });
         }
         selectedBuffer = [];
-      }, 800);
+      }, 1200);
     }
   });
 
@@ -142,7 +143,7 @@ const setupTiles = async (tiles) => {
 
 /* Initialize image data */
 let tiles = [];
-const N = 2 + Math.floor(Math.random() * 15);
+const N = 3 + Math.floor(Math.random() * 16);
 for (let i = 0; i < N; i++) {
   const img = await ImageUtil.loadImage(`https://picsum.photos/${SIZE}?random=${i}`, { width: 150, height: 150 });
   tiles.push({
@@ -163,7 +164,5 @@ tiles = _.shuffle(tiles);
 
 d3.select('#loading').remove();
 setupTiles(tiles);
-
-
 </script>
 </html>
